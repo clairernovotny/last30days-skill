@@ -314,13 +314,15 @@ def parse_v2_response(
 # ---------------------------------------------------------------------------
 
 
-def _topic_tokens(topic: str) -> List[str]:
+def _topic_tokens(topic: str, *, preserve_trailing_colon: bool = False) -> List[str]:
     """Sanitized topic tokens: no quotes, grouping, operators, or negation."""
     separators = str.maketrans({char: " " for char in _GROUPING_CHARS + _QUOTE_CHARS})
     cleaned = str(topic or "").translate(separators)
     tokens: List[str] = []
     for token in cleaned.split():
         clean = token.strip(_APOSTROPHES)
+        if preserve_trailing_colon and clean.endswith(":") and clean.count(":") == 1:
+            clean = clean[:-1]
         if not clean:
             continue
         if ":" in clean or clean.startswith("-"):
@@ -375,13 +377,14 @@ def build_keyword_query(topic: str) -> str:
 
     The keyword counterpart of :func:`build_query` for callers that keep
     X's default any-order keyword matching instead of one exact phrase
-    (``xurl_x``). The same sanitizer applies: bare ``and``/``or`` in any
-    case, colon operators, leading ``-`` negation, grouping and quote
-    characters never reach X, whose v2 grammar rejects a bare lowercase
-    ``and``/``or`` with HTTP 400. Capped at ``MAX_QUERY_CHARS`` on a token
-    boundary. Returns "" when nothing lexical survives.
+    (``xurl_x``). The same operator safeguards apply, while ordinary trailing
+    colons preserve subject words: bare ``and``/``or`` in any case, colon
+    operators, leading ``-`` negation, grouping and quote characters never
+    reach X, whose v2 grammar rejects a bare lowercase ``and``/``or`` with
+    HTTP 400. Capped at ``MAX_QUERY_CHARS`` on a token boundary. Returns ""
+    when nothing lexical survives.
     """
-    return _fit(_topic_tokens(topic), _compile_keywords)
+    return _fit(_topic_tokens(topic, preserve_trailing_colon=True), _compile_keywords)
 
 
 # ---------------------------------------------------------------------------

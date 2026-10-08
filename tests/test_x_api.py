@@ -194,6 +194,9 @@ class TestBuildQuery:
         q = x_api.build_query("(Peter Steinberger) -steipete “quoted” [x] {y}")
         assert q == '"Peter Steinberger quoted x y" -is:retweet'
 
+    def test_trailing_colon_handling_stays_out_of_phrase_query(self):
+        assert x_api.build_query("Python: what's new") == '"what\'s new" -is:retweet'
+
     def test_600_char_topic_compiles_under_512_with_balanced_quotes(self):
         topic = " ".join(f"word{i}" for i in range(100))
         assert len(topic) >= 600

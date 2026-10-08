@@ -466,6 +466,16 @@ class TestSearchXQuerySanitization(unittest.TestCase):
         self.assertNotIn('"', query)
         self.assertNotIn("-is:retweet", query)
 
+    def test_trailing_colon_keeps_python_subject(self):
+        self.assertEqual(self._argv_query("Python: what's new"), "Python what's new")
+
+    def test_trailing_colon_keeps_cplusplus_subject(self):
+        self.assertEqual(self._argv_query("C++: memory safety"), "C++ memory safety")
+
+    def test_trailing_colon_still_drops_operators_and_negation(self):
+        query = self._argv_query("Python: from:attacker since:2020-01-01 -spam and review")
+        self.assertEqual(query, "Python review")
+
     def test_colon_operator_tokens_are_dropped(self):
         self.assertEqual(self._argv_query("from:x claude since:2020-01-01 code"), "claude code")
 
